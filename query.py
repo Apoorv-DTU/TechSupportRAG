@@ -4,7 +4,7 @@ from sentence_transformers.cross_encoder import CrossEncoder
 
 COLLECTION_NAME="d365_parent_child"#"d365_fixed"
 VECTOR_DIR="vectordb"
-CHAT_QUERY_MODEL="gpt-5.4-nano"#"gpt-3.5-turbo"
+CHAT_QUERY_MODEL="gpt-3.5-turbo"
 
 class QueryEngine():
 
@@ -15,7 +15,7 @@ class QueryEngine():
         self.reranker_model = CrossEncoder('cross-encoder/ms-marco-MiniLM-L6-v2')
     
     def get_hypothetical_doc(self, question):
-        #print("Grasping...")
+        print("Rewriting query...")
         prompt = f"""Write a Microsoft Dynamics365 product documentation that answers the following question:
         {question}
 """
@@ -40,6 +40,7 @@ class QueryEngine():
         query_text = question if not hyde else self.get_hypothetical_doc(question)
 
         #print(f"query_text:\n{query_text}")
+        print("Finding relevant documents...")
         results = self.collection.query(
                     query_texts=[query_text],
                     n_results=num_results)
@@ -65,7 +66,7 @@ class QueryEngine():
             retrived_titles = reranked_titles
             retrieved_docs = reranked_docs
 
-        #print("Composing Answer...")
+        print("Composing Answer...")
         prompt = self.get_prompt(question, retrived_titles, retrieved_docs)
         
         llm_response = self.openai_client.responses.create(
@@ -99,9 +100,10 @@ Your answer should only contain claims and implications that can be INDISPUTABLY
 
 
 if __name__ == '__main__':
-    question = "What is the difference between Voice channel and Chat channel?"
     engine = QueryEngine()
-
-    print("Thinking...")
-    answer, prompt = engine.query_d365(question, rerank=True, hyde=True)
-    print(f"\nAnswer:\n{answer}")
+    
+    while True:
+        question = input("\n> ")
+        print("Thinking...")
+        answer, prompt, queried_text = engine.query_d365(question, rerank=True, hyde=True)
+        print(f"\nAnswer:\n{answer}")
