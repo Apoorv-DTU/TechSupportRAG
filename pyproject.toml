@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tech_support_rag"
+version = "0.1.1"
+dependencies = [
+    "bs4", # List your local project dependencies here
+]
+
+[tool.setuptools]
+py-modules = ["reader"]
