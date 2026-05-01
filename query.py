@@ -34,7 +34,7 @@ class QueryEngine():
             idx.append(ranks[i]['corpus_id'])
         return idx
 
-    def query_d365(self, question, hyde=False, rerank=False):
+    def query_d365(self, question, only_docs=False, hyde=False, rerank=False):
 
         num_results = 20 if rerank else 5
         query_text = question if not hyde else self.get_hypothetical_doc(question)
@@ -66,16 +66,19 @@ class QueryEngine():
             retrived_titles = reranked_titles
             retrieved_docs = reranked_docs
 
-        print("Composing Answer...")
-        prompt = self.get_prompt(question, retrived_titles, retrieved_docs)
-        
-        llm_response = self.openai_client.responses.create(
-            model=CHAT_QUERY_MODEL,
-            input=prompt,
-            temperature=0.2
-        )
+        composed_answer = None
+        if not only_docs:
+            print("Composing Answer...")
+            prompt = self.get_prompt(question, retrived_titles, retrieved_docs)
+            
+            llm_response = self.openai_client.responses.create(
+                model=CHAT_QUERY_MODEL,
+                input=prompt,
+                temperature=0.2
+            )
+            composed_answer = llm_response.output_text
 
-        return llm_response.output_text, retrieved_docs, query_text
+        return composed_answer, retrieved_docs, query_text
 
 
     def get_prompt(self, query, ids, documents):
@@ -105,5 +108,6 @@ if __name__ == '__main__':
     while True:
         question = input("\n> ")
         print("Thinking...")
-        answer, prompt, queried_text = engine.query_d365(question, rerank=True, hyde=True)
+        answer, docs, queried_text = engine.query_d365(question, rerank=True, hyde=True, only_docs=True)
+        print(f"\nDocs:\n{docs}")
         print(f"\nAnswer:\n{answer}")
